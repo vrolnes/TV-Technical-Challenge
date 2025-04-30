@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.vrolnes.tvtechnicalchallenge.presentation.ui.MoviePlayerScreen
 import com.vrolnes.tvtechnicalchallenge.presentation.ui.MovieDetailScreen
 import com.vrolnes.tvtechnicalchallenge.presentation.ui.MovieListScreen
 
@@ -18,13 +19,24 @@ fun AppNavigation() {
         }
         composable(
             route = Screen.MovieDetail.route,
-            arguments = listOf(navArgument(Screen.MOVIE_ID_ARG) { type = NavType.IntType })
+            arguments = listOf(navArgument(Screen.Args.MOVIE_ID) { type = NavType.IntType })
         ) { backStackEntry ->
-            val movieId = backStackEntry.arguments?.getInt(Screen.MOVIE_ID_ARG)
+            val movieId = backStackEntry.arguments?.getInt(Screen.Args.MOVIE_ID)
             if (movieId != null) {
                 MovieDetailScreen(movieId = movieId, navController = navController)
             } else {
                  navController.popBackStack()
+            }
+        }
+        composable(
+            route = Screen.MoviePlayer.route,
+            arguments = listOf(navArgument(Screen.Args.MOVIE_ID) { type = NavType.IntType })
+        ) { backStackEntry ->
+            val movieId = backStackEntry.arguments?.getInt(Screen.Args.MOVIE_ID)
+            if (movieId != null) {
+                MoviePlayerScreen(movieId = movieId)
+            } else {
+                navController.popBackStack()
             }
         }
     }

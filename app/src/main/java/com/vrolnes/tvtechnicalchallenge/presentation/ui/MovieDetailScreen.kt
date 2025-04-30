@@ -1,16 +1,35 @@
 package com.vrolnes.tvtechnicalchallenge.presentation.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,11 +38,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.vrolnes.tvtechnicalchallenge.domain.model.Movie
+import com.vrolnes.tvtechnicalchallenge.presentation.ui.navigation.Screen
 import com.vrolnes.tvtechnicalchallenge.presentation.viewmodel.MovieListViewModel
 
 @Composable
@@ -32,22 +51,24 @@ fun MovieDetailScreen(
     navController: NavController,
     listViewModel: MovieListViewModel = hiltViewModel()
 ) {
-    val listState by listViewModel.state.collectAsStateWithLifecycle()
+    // Observe the movie details state from the ViewModel
+    val movie by listViewModel.getMovieDetailsFlow(movieId).collectAsState(initial = null)
 
-    val movie = remember(listState, movieId) {
-        listState.popularMovies.find { it.id == movieId }
-            ?: listState.topRatedMovies.find { it.id == movieId }
-            ?: listState.revenueMovies.find { it.id == movieId }
-    }
-
-    MovieDetailContent(movie = movie, onNavigateBack = { navController.popBackStack() })
+    MovieDetailContent(
+        movie = movie,
+        onNavigateBack = { navController.popBackStack() },
+        onPlayMovie = { movie?.id?.let { id ->
+            navController.navigate(Screen.MoviePlayer.createRoute(id))
+        } }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MovieDetailContent(
     movie: Movie?,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onPlayMovie: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -85,9 +106,10 @@ private fun MovieDetailContent(
                     contentDescription = "${movie.title} backdrop",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(16f / 9f),
+                        .aspectRatio(16f / 9f)
+                        .clickable(onClick = onPlayMovie),
                     contentScale = ContentScale.Crop,
-                   )
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 

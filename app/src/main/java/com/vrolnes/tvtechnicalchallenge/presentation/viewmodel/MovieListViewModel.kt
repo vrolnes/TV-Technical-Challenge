@@ -1,6 +1,5 @@
 package com.vrolnes.tvtechnicalchallenge.presentation.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vrolnes.tvtechnicalchallenge.domain.model.Movie
@@ -9,6 +8,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -146,5 +148,35 @@ class MovieListViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Finds a movie by its ID from the currently loaded lists.
+     * Returns null if the movie is not found in any list.
+     */
+    fun getMovieById(id: Int): Movie? {
+        val currentState = _state.value
+        return currentState.popularMovies.find { it.id == id }
+            ?: currentState.topRatedMovies.find { it.id == id }
+            ?: currentState.revenueMovies.find { it.id == id }
+    }
+
+    /**
+     * Returns a Flow that emits the movie with the given ID when it becomes available
+     * in any of the loaded lists.
+     */
+    fun getMovieDetailsFlow(id: Int): StateFlow<Movie?> {
+        // This combines the three movie list flows and maps them to find the movie by ID.
+        // It emits a new value whenever any of the lists change and the target movie's presence changes.
+        return state.map {
+            it.popularMovies.find { movie -> movie.id == id } 
+                ?: it.topRatedMovies.find { movie -> movie.id == id } 
+                ?: it.revenueMovies.find { movie -> movie.id == id }
+        }.distinctUntilChanged() // Only emit when the found movie (or null) actually changes
+        .stateIn( // Convert the Flow to a StateFlow
+            scope = viewModelScope,
+            started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000), // Keep active 5s after last subscriber
+            initialValue = getMovieById(id) // Start with the synchronously checked value
+        )
     }
 } 
