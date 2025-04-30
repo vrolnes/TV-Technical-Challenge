@@ -1,5 +1,6 @@
 package com.vrolnes.tvtechnicalchallenge.presentation.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,18 +28,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.vrolnes.tvtechnicalchallenge.R
 import com.vrolnes.tvtechnicalchallenge.domain.model.Movie
 import com.vrolnes.tvtechnicalchallenge.presentation.ui.components.MovieCard
+import com.vrolnes.tvtechnicalchallenge.presentation.ui.navigation.Screen
 import com.vrolnes.tvtechnicalchallenge.presentation.viewmodel.MovieListState
 import com.vrolnes.tvtechnicalchallenge.presentation.viewmodel.MovieListViewModel
 import com.vrolnes.tvtechnicalchallenge.presentation.viewmodel.MovieListViewModel.SortBy
@@ -50,6 +50,7 @@ private const val HORIZONTAL_PAGINATION_THRESHOLD = 4
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieListScreen(
+    navController: NavController,
     viewModel: MovieListViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -69,6 +70,7 @@ fun MovieListScreen(
         MovieListContent(
             state = state,
             onLoadNextPage = viewModel::loadNextPageForCategory,
+            navController = navController,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -78,6 +80,7 @@ fun MovieListScreen(
 private fun MovieListContent(
     state: MovieListState,
     onLoadNextPage: (String) -> Unit,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -94,7 +97,10 @@ private fun MovieListContent(
                 isLoadingNextPage = state.isPopularLoadingNextPage,
                 error = state.popularError,
                 endReached = state.popularEndReached,
-                onLoadNextPage = { onLoadNextPage(SortBy.POPULARITY_DESC) }
+                onLoadNextPage = { onLoadNextPage(SortBy.POPULARITY_DESC) },
+                onMovieClick = { movieId ->
+                    navController.navigate(Screen.MovieDetail.createRoute(movieId))
+                }
             )
         }
 
@@ -107,7 +113,10 @@ private fun MovieListContent(
                 isLoadingNextPage = state.isTopRatedLoadingNextPage,
                 error = state.topRatedError,
                 endReached = state.topRatedEndReached,
-                onLoadNextPage = { onLoadNextPage(SortBy.VOTE_AVERAGE_DESC) }
+                onLoadNextPage = { onLoadNextPage(SortBy.VOTE_AVERAGE_DESC) },
+                onMovieClick = { movieId ->
+                    navController.navigate(Screen.MovieDetail.createRoute(movieId))
+                }
             )
         }
 
@@ -120,7 +129,10 @@ private fun MovieListContent(
                 isLoadingNextPage = state.isRevenueLoadingNextPage,
                 error = state.revenueError,
                 endReached = state.revenueEndReached,
-                onLoadNextPage = { onLoadNextPage(SortBy.REVENUE_DESC) }
+                onLoadNextPage = { onLoadNextPage(SortBy.REVENUE_DESC) },
+                onMovieClick = { movieId ->
+                    navController.navigate(Screen.MovieDetail.createRoute(movieId))
+                }
             )
         }
 
@@ -139,6 +151,7 @@ private fun MovieSection(
     error: String?,
     endReached: Boolean,
     onLoadNextPage: () -> Unit,
+    onMovieClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val lazyListState = rememberLazyListState()
@@ -183,7 +196,9 @@ private fun MovieSection(
                     items(movies, key = { "${title}_${it.id}" }) { movie ->
                         MovieCard(
                             movie = movie,
-                            modifier = Modifier.width(130.dp)
+                            modifier = Modifier
+                                .width(130.dp)
+                                .clickable { onMovieClick(movie.id) }
                         )
                     }
 
