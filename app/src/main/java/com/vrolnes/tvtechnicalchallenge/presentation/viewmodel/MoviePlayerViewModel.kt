@@ -21,7 +21,6 @@ private const val VOD_URI = "https://storage.googleapis.com/wvmedia/cenc/h264/te
 private const val DRM_LICENSE_URI = "https://proxy.uat.widevine.com/proxy?video_id=2015_tears&provider=widevine_test"
 private val DRM_SCHEME_UUID = Util.getDrmUuid("widevine")!!
 
-private const val TAG = "MoviePlayerViewModel"
 
 @OptIn(UnstableApi::class) // For ExoPlayer APIs
 @HiltViewModel
